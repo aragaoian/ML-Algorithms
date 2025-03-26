@@ -15,23 +15,23 @@ def regressions(df_path: str = None, validation_df_path: str = None, target: str
     )
 
     lr = LinearRegression(1000, 0.01)
-    lr.ordinaryleastSquares(X_train, y_train)
+    lr.moorePenroseLeastSquares(X_train, y_train)
     y_pred = lr.predict(X_test)
 
-    em = EvaluationMetrics(n=X_test.shape[0], y=y_test, y_pred=y_pred)
-    MAE = em.mae()
-    MSE = em.mse()
-    RMSE = em.rmse()
-    RSQUARED = em.rsquared()
+    # em = EvaluationMetrics(n=X_test.shape[0], y=y_test, y_pred=y_pred)
+    # MAE = em.mae()
+    # MSE = em.mse()
+    # RMSE = em.rmse()
+    # RSQUARED = em.rsquared()
 
-    print(f"MAE: {MAE}")
-    print(f"MSE: {MSE}")
-    print(f"RMSE: {RMSE}")
-    print(f"R2: {RSQUARED}")
+    # print(f"MAE: {MAE}")
+    # print(f"MSE: {MSE}")
+    # print(f"RMSE: {RMSE}")
+    # print(f"R2: {RSQUARED}")
 
-    plt.scatter(X_test, y_test, label="Test Data")
-    plt.plot(X_test, y_pred, color="red", label="Predicted Line")
-    plt.show()
+    # plt.scatter(X_test, y_test, label="Test Data")
+    # plt.plot(X_test, y_pred, color="red", label="Predicted Line")
+    # plt.show()
 
 
 def main():

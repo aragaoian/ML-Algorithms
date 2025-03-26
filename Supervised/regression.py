@@ -10,11 +10,12 @@ class Regression:
         self.b = 0
         self.error = 0
 
-    def regularize(self, lamb: float = 0):
+    def regularize(self, lamb: float = 0, alpha: float = 0):
         return {
             None: 0,
             "L1": lamb * np.sign(self.w),
             "L2": 2 * lamb * self.w,
+            "L1+L2": (lamb * np.sign(self.w)) + (1 - alpha) * (2 * lamb * self.w),
         }
 
     def predict(self, X):
@@ -64,11 +65,36 @@ class LinearRegression(Regression):
         self.b = y_mean - self.w * x_mean
 
     def moorePenroseLeastSquares(self, X, y):
+        self.b = np.ones((X.shape[0], 1))
+        np.concatenate((X, self.b), axis=1)
         y = y.reshape(-1, 1)
-        X = np.c_[np.ones((X.shape[0], 1)), X]  # Add bias term
 
-        # Compute optimal weights
-        theta = np.linalg.inv(X.T @ X) @ X.T @ y
+        U, S, V = np.linalg.svd(X)
+        print(f"U: {U.shape}")
+        print(f"S: {S.shape}")
+        print(f"V: {V.shape}")
+        # self.w = V @ np.linalg.pinv(S) @ np.transpose(U)
 
-        self.b = theta[0]
-        self.w = theta[1:]
+
+class LassoRegression(Regression):
+    def __init__(self, n_iter, l_rate):
+        super().__init__(n_iter, l_rate)
+
+    def fit(self, X, y):
+        super().fit(X, y, reg_factor="L1")
+
+
+class RidgeRegression(Regression):
+    def __init__(self, n_iter, l_rate):
+        super().__init__(n_iter, l_rate)
+
+    def fit(self, X, y):
+        super().fit(X, y, reg_factor="L2")
+
+
+class ElasticNetRegression(Regression):
+    def __init__(self, n_iter, l_rate):
+        super().__init__(n_iter, l_rate)
+
+    def fit(self, X, y, alpha: float):
+        super().fit(X, y, reg_factor="L1+L2")
