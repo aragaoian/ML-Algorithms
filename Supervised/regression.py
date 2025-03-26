@@ -3,19 +3,22 @@ from Utils.weights import Weights
 
 
 class Regression:
-    def __init__(self, n_iter: int, l_rate: float):
+    def __init__(self, n_iter: int, l_rate: float, alpha: float = 0, ratio: float = 0):
         self.n_iter = n_iter
         self.l_rate = l_rate
         self.w = None
         self.b = 0
         self.error = 0
+        self.alpha = alpha
+        self.ratio = ratio
 
-    def regularize(self, lamb: float = 0, alpha: float = 0):
+    def regularize(self):
         return {
             None: 0,
-            "L1": lamb * np.sign(self.w),
-            "L2": 2 * lamb * self.w,
-            "L1+L2": (lamb * np.sign(self.w)) + (1 - alpha) * (2 * lamb * self.w),
+            "L1": self.alpha * np.sign(self.w),
+            "L2": 2 * self.alpha * self.w,
+            "L1+L2": (self.alpha * np.sign(self.w))
+            + (1 - self.ratio) * (2 * self.alpha * self.w),
         }
 
     def predict(self, X):
@@ -66,35 +69,50 @@ class LinearRegression(Regression):
 
     def moorePenroseLeastSquares(self, X, y):
         self.b = np.ones((X.shape[0], 1))
-        np.concatenate((X, self.b), axis=1)
+        X = np.column_stack((X, self.b))
         y = y.reshape(-1, 1)
 
-        U, S, V = np.linalg.svd(X)
-        print(f"U: {U.shape}")
-        print(f"S: {S.shape}")
-        print(f"V: {V.shape}")
-        # self.w = V @ np.linalg.pinv(S) @ np.transpose(U)
+        mp = np.linalg.pinv(X.T @ X) @ X.T @ y
+        self.w = mp[:-1]
+        self.b = mp[-1:]
+
+    def moorePenroseLeastSquaresSVD(self, X, y):
+        """
+        X.T @ X reduces dimensionality and optimizes computations due to
+        X.T @ X being a symetric and positive semi-definite matrix
+        (SVD's computational complexity is reduced with non negative singular values)
+        """
+        self.b = np.ones((X.shape[0], 1))
+        X = np.column_stack((X, self.b))
+        y = y.reshape(-1, 1)
+
+        U, S, V = np.linalg.svd(X.T @ X)
+        S_diag = np.diag(S)
+        mp_svd = (U @ np.linalg.pinv(S_diag) @ V.T) @ (X.T @ y)
+
+        self.w = mp_svd[:-1]
+        self.b = mp_svd[-1:]
 
 
 class LassoRegression(Regression):
-    def __init__(self, n_iter, l_rate):
-        super().__init__(n_iter, l_rate)
+    def __init__(self, n_iter, l_rate, alpha: float = 0):
+        super().__init__(n_iter, l_rate, alpha)
 
     def fit(self, X, y):
         super().fit(X, y, reg_factor="L1")
 
 
 class RidgeRegression(Regression):
-    def __init__(self, n_iter, l_rate):
-        super().__init__(n_iter, l_rate)
+    def __init__(self, n_iter, l_rate, alpha: float = 0):
+        super().__init__(n_iter, l_rate, alpha)
 
     def fit(self, X, y):
         super().fit(X, y, reg_factor="L2")
 
 
 class ElasticNetRegression(Regression):
-    def __init__(self, n_iter, l_rate):
-        super().__init__(n_iter, l_rate)
+    def __init__(self, n_iter, l_rate, alpha: float = 0, ratio: float = 0):
+        super().__init__(n_iter, l_rate, alpha, ratio)
 
-    def fit(self, X, y, alpha: float):
+    def fit(self, X, y):
         super().fit(X, y, reg_factor="L1+L2")
