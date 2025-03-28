@@ -3,14 +3,21 @@ from Utils.weights import Weights
 
 
 class Regression:
-    def __init__(self, n_iter: int, l_rate: float, alpha: float = 0, ratio: float = 0):
+    def __init__(
+        self,
+        n_iter: int = 100,
+        l_rate: float = 0.01,
+        alpha: float = 0,
+        l1_ratio: float = 0,
+    ):
         self.n_iter = n_iter
         self.l_rate = l_rate
         self.w = None
         self.b = 0
         self.error = 0
         self.alpha = alpha
-        self.ratio = ratio
+        self.l1_ratio = l1_ratio
+        self.training_erros = []
 
     def regularize(self):
         return {
@@ -18,7 +25,7 @@ class Regression:
             "L1": self.alpha * np.sign(self.w),
             "L2": 2 * self.alpha * self.w,
             "L1+L2": (self.alpha * np.sign(self.w))
-            + (1 - self.ratio) * (2 * self.alpha * self.w),
+            + (1 - self.l1_ratio) * (2 * self.alpha * self.w),
         }
 
     def predict(self, X):
@@ -46,9 +53,6 @@ class LinearRegression(Regression):
     def __init__(self, n_iter: int, l_rate: float):
         super().__init__(n_iter, l_rate)
 
-    def printWeights(self):
-        print(self.w, self.w.shape)
-
     def gradientDescent(self, X, y):
         super().fit(X, y)
 
@@ -68,6 +72,12 @@ class LinearRegression(Regression):
         self.b = y_mean - self.w * x_mean
 
     def moorePenroseLeastSquares(self, X, y):
+        """
+        NOTE: MP math is something I have to study more (especially AT @ (Ax = b) = MP formula)
+        The Moore-Penrose method employs a distinct approach to regression compared
+        to most other methods. Instead of relying on iterative approximations, it
+        utilizes linear algebra to determine the best-fit line directly.
+        """
         self.b = np.ones((X.shape[0], 1))
         X = np.column_stack((X, self.b))
         y = y.reshape(-1, 1)
@@ -79,7 +89,7 @@ class LinearRegression(Regression):
     def moorePenroseLeastSquaresSVD(self, X, y):
         """
         X.T @ X reduces dimensionality and optimizes computations due to
-        X.T @ X being a symetric and positive semi-definite matrix
+        X.T @ X being a symmetric and positive semi-definite matrix
         (SVD's computational complexity is reduced with non negative singular values)
         """
         self.b = np.ones((X.shape[0], 1))
@@ -95,6 +105,19 @@ class LinearRegression(Regression):
 
 
 class LassoRegression(Regression):
+    """
+    Lasso stands for Least Absolute Shrinkage and Selection Operator.
+
+    The goal of this type of regression is to shrink the coefficients to 0,
+    adding sparsity to the matrix, therefore leaving relevant features and aiding
+    to reduce model complexity.
+
+    Lasso does that by adding a penalty term, representedas 'alpha * coefficientes',
+    avoiding issues like multicolineatiry (highly correlatedindependent variables)
+    and overfitting.
+
+    """
+
     def __init__(self, n_iter, l_rate, alpha: float = 0):
         super().__init__(n_iter, l_rate, alpha)
 
@@ -103,6 +126,10 @@ class LassoRegression(Regression):
 
 
 class RidgeRegression(Regression):
+    """ 
+    
+    """
+
     def __init__(self, n_iter, l_rate, alpha: float = 0):
         super().__init__(n_iter, l_rate, alpha)
 
@@ -111,8 +138,11 @@ class RidgeRegression(Regression):
 
 
 class ElasticNetRegression(Regression):
-    def __init__(self, n_iter, l_rate, alpha: float = 0, ratio: float = 0):
-        super().__init__(n_iter, l_rate, alpha, ratio)
+    """ 
+    """
+
+    def __init__(self, n_iter, l_rate, alpha: float = 0, l1_ratio: float = 0):
+        super().__init__(n_iter, l_rate, alpha, l1_ratio)
 
     def fit(self, X, y):
         super().fit(X, y, reg_factor="L1+L2")
